@@ -1,9 +1,15 @@
+# Glossary
+
+- MDS: Master Data Store, where the master data is stored
+- node/NDS: Node Data Store, exporters and importers machines, hosts sending/receiving data
+
 # Importer process
 
 ## 1. input files
 
 - define how to convert sources (xml, csv, json, services...) into documents
 - validations: mandatory fields, available values, regexps...
+- it could be a file or a service-call
 
 ## 2. document
 
@@ -24,6 +30,7 @@
 
 - this is the queue worker
 - get a piece to be changed, and execute the proper commands (insert/update/delete into tables)
+- it sends the diff data to all nodes in the system
 
 
 # Components
