@@ -44,3 +44,8 @@
 - updater / worker
   - rules/tasks
   
+# Technologies
+
+- Go lang (this)
+- RabbitMQ
+- MongoDB
