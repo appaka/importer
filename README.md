@@ -18,13 +18,15 @@
 ### 1.1. Receive files
 
 - configured by a config file
-- directoriesfor sources, archive, fails, success...
+- local directories for sources, archive, fails, success...
+- remotes: FTP, SSH, NFS...
 - regexp to match the files
 - type: csv, tsv, Excel, json, yml...
 - indexes fields
 - header field names translations (field name in file is related to another field name in MDS)
 - cron times (how often it should check for new files)
 - copying files check (check if the file is uploading)
+- validation rules: mandatory fields, regexps for values...
 
 ### 1.2. Receive data by API
 
