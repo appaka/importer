@@ -37,6 +37,7 @@
 - A node subscribed to a type of object (product, category, stock...) will receive any change about any object of that type
 - A node could be subscribed just to any objects of a type (product 543, category 987, ...)
 - The data could be received as a diff, as the full row, just a few fields (configured by config file)
+- A node could be a channel of RabbitMQ
 
 # Configuration files
 
@@ -51,6 +52,7 @@ When the MDS receives data and detect changes, those changes are sent inmediatly
 The subscribers should choose the way this data is received:
 - just the diff / all the row / certain fields of the row / transformed fields
 - by json, csv, yml...
+- remotes : FTP, SSH, NFS...
 
 # Components
 
