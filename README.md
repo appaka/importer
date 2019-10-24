@@ -32,6 +32,10 @@
 
 - TODO
 
+### 1.3. Receive data from a RabittMQ channel
+
+- TODO
+
 ## 2. Node receives data
 
 - A node subscribed to a type of object (product, category, stock...) will receive any change about any object of that type
