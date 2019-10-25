@@ -1,8 +1,3 @@
-# Glossary
-
-- MDS: Master Data Store, where the master data is stored
-- node/NDS: Node Data Store, exporters and importers machines, hosts sending/receiving data
-
 # Importer process
 
 ## 1. MDS receives data
@@ -60,6 +55,16 @@ The subscribers should choose the way this data is received:
 
 # Components
 
+- file system : local, FTP, SSH, NFS...
+- file format : CSV, TSV, JSON, XML, YML, HTML, Excel...
+- rules/validators : regular expresions to validate values
+- data transformers : generate new fields, calculated
+- object types : definitions (sources/targets, formats, fields, rules...)
+- nodes : sources, subscribers
+
+
+## deprecated
+
 - sources
   - translations
   - validations
@@ -74,6 +79,14 @@ The subscribers should choose the way this data is received:
 - Go lang (this)
 - RabbitMQ
 - MongoDB
+- NodeJS?
+- ReactJS?
+
+# Glossary
+
+- MDS: Master Data Store, where the master data is stored
+- node/NDS: Node Data Store, exporters and importers machines, hosts sending/receiving data
+
 
 # Deprecated
 
