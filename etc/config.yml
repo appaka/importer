@@ -1,0 +1,62 @@
+node:
+  name: node1
+  children:
+    - node2
+    - node3
+
+sources:
+
+  product1:
+    document: product
+    connection:
+      type: filesystem
+      directory: /u01/data/products/incomming
+      regexp: products-(.*).csv
+    translations:
+      - name: "{name} {surname}"
+    remove:
+      - surname
+    after-load:
+      moveto: /u01/data/products/processed
+    after-error:
+      moveto: /u01/data/products/errors
+
+  product2:
+    document: product
+    connection:
+      type: tcp
+      nodes:
+        - node2
+
+  customer1:
+    document: customer
+    connection:
+      type: filesystem
+      directory: /u01/data/customers/incomming
+      regexp: customers-(.*).xml
+    map:
+      - name: root/items/item/name
+      - email: root/items/item/email
+      - phone: root/items/item/phone
+    after-load:
+      moveto: /u01/data/customers/processed
+    after-error:
+      moveto: /u01/data/customers/errors
+
+
+subscriptions:
+
+  product1:
+    document: product
+    data:
+      type: row
+      format: csv
+    connection:
+      type: ftp
+      host: node3
+      username: username
+      password: password
+      directory: /incomming
+      filename: products-{datetime}.csv
+    schedule:
+      cron: "* */1 * * *"
