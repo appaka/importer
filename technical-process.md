@@ -27,7 +27,7 @@ We receive data (documents, rows, items...) and generate transactions in the tim
 - last_version: reference to the transaction with the previous version (null if new)
 
 We need:
-- postgres for transactions
+- postgres for transactions (or we could create an adhoc database, postgres is too much for only one table)
 - mongodb for documents
-- redis for caching
-- graphql for querying?
+- redis for caching queries?
+- graphql for querying the documents?
