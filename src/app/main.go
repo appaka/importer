@@ -114,6 +114,7 @@ func h1(title string) {
 }
 
 func main() {
+
 	config := Config{}
 	config.Load()
 
@@ -129,6 +130,7 @@ func main() {
 			break
 		}
 		if document == nil {
+			// TODO: error reading document => implement proper logging
 			continue
 		}
 
