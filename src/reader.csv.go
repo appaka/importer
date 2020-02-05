@@ -68,6 +68,7 @@ func main() {
 
 	start := time.Now()
 	counter := float64(0)
+	skipped := int16(0)
 
 	for {
 		counter++
@@ -78,6 +79,7 @@ func main() {
 			break
 		}
 		if document == nil {
+			skipped++
 			continue
 		}
 
@@ -115,10 +117,9 @@ func main() {
 	*/
 
 	// final stats
-	t := time.Now()
-	elapsedSeconds := t.Sub(start).Seconds()
-	rowsPerSecond := counter / elapsedSeconds
-
-	fmt.Printf("time elapsed: %.4f\n", elapsedSeconds)
-	fmt.Printf("rows per second: %.4f\n", rowsPerSecond)
+	elapsedSeconds := time.Now().Sub(start).Seconds()
+	fmt.Printf("   processed: %14.0f (%d skipped / %.2f%%)\n", counter, skipped, (float64(skipped)/counter)*100)
+	fmt.Printf("time elapsed: %14.4f\n", elapsedSeconds)
+	fmt.Printf(" rows/second: %14.4f\n", counter/elapsedSeconds)
+	fmt.Printf("files/second: %14.4f\n", (counter/elapsedSeconds)/counter)
 }
