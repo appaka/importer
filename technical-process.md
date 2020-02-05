@@ -31,3 +31,18 @@ We need:
 - mongodb for documents
 - redis for caching queries?
 - graphql for querying the documents?
+
+
+
+---
+
+MODULES:
+- CSV reader
+  - read a CSV file and send documents to MDM
+  - delete not present documents?
+    - send the PKs found in the CSV file to MDM, and MDM will delete the others
+- MDM
+  - receive documents and generate transactions
+  - receive documents to be deleted, and generate transactions
+  - transactions could trigger events
+
