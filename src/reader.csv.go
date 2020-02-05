@@ -12,35 +12,51 @@ import (
 	"time"
 )
 
-var config struct {
-	CsvFilePath     string
-	ProcessFilePath string
-	DeleteOthers    bool
-}
-
-var csvFile struct {
-	Reader  *csv.Reader
-	Headers []string
+type CSVFile struct {
+	reader  *csv.Reader
+	headers []string
 	EOF     bool
 	Items   int64
 	Skipped int64
 }
 
-func getDocument() *string {
-	record, err := csvFile.Reader.Read()
+func (file *CSVFile) Open(filePath string) {
+	stream, error := os.Open(filePath)
+	if error != nil {
+		fmt.Printf("ERROR opening file %s!\n", filePath)
+		// Unable to open file error
+		os.Exit(1)
+	}
+
+	file.reader = csv.NewReader(bufio.NewReader(stream))
+
+	headers, err := file.reader.Read()
 	if err == io.EOF {
-		csvFile.EOF = true
+		// No headers error
+		os.Exit(1)
+	}
+
+	file.headers = headers
+	file.EOF = false
+	file.Items = 0
+	file.Skipped = 0
+}
+
+func (file *CSVFile) GetDocument() *string {
+	record, err := file.reader.Read()
+	if err == io.EOF {
+		file.EOF = true
 		return nil
 	}
 	if err != nil {
-		csvFile.Skipped++
+		file.Skipped++
 		return nil
 	}
 
 	// transform the array into a map
 	row := map[string]string{}
-	for i := 0; i < len(csvFile.Headers); i++ {
-		var field string = csvFile.Headers[i]
+	for i := 0; i < len(file.headers); i++ {
+		var field string = file.headers[i]
 		var value string = record[i]
 		row[field] = value
 	}
@@ -48,73 +64,68 @@ func getDocument() *string {
 	// transform the map into a JSON object
 	document, err := json.Marshal(row)
 	if err != nil {
-		csvFile.Skipped++
+		file.Skipped++
 		return nil
 	}
 
-	csvFile.Items++
+	file.Items++
 
 	documentString := string(document)
 	return &documentString
 }
 
-func openCSVFile() {
-	stream, error := os.Open(config.CsvFilePath)
-	if error != nil {
-		fmt.Printf("ERROR!")
-		os.Exit(1)
+type Config struct {
+	CsvFilePath     string
+	ProcessFilePath string
+	DeleteOthers    bool
+	Debug           bool
+}
+
+func (config *Config) Load() {
+	// PARAMS
+	csvFilePath := flag.String("file", "", "file path to be imported")
+	processFilePath := flag.String("process", "", "process script file path")
+	deleteOthers := flag.Bool("delete-others", false, "delete items not presents in this file")
+	debug := flag.Bool("debug", true, "debug process")
+	flag.Parse()
+
+	config.CsvFilePath = *csvFilePath
+	config.ProcessFilePath = *processFilePath
+	config.DeleteOthers = *deleteOthers
+	config.Debug = *debug
+
+	if config.Debug {
+		mapBooleanYesNo := map[bool]string{
+			false: "No",
+			true:  "Yes",
+		}
+
+		h1("CONFIGURATION")
+		fmt.Printf(" --file (CSV file path)                 = %s\n", config.CsvFilePath)
+		fmt.Printf(" --process (Processor script file path) = %s\n", config.ProcessFilePath)
+		fmt.Printf(" --delete-others (Delete others items)  = %s\n", mapBooleanYesNo[config.DeleteOthers])
+		fmt.Printf(" --debug (Debug process)                = %s\n", mapBooleanYesNo[config.Debug])
+		fmt.Println()
 	}
-
-	csvFile.Reader = csv.NewReader(bufio.NewReader(stream))
-
-	headers, err := csvFile.Reader.Read()
-	if err == io.EOF {
-		os.Exit(1)
-	}
-
-	csvFile.Headers = headers
-	csvFile.EOF = false
-	csvFile.Items = 0
-	csvFile.Skipped = 0
 }
 
 func h1(title string) {
 	fmt.Printf("%s %s\n", title, strings.Repeat("=", 60-len(title)-1))
 }
 
-func loadConfig() {
-	// PARAMS
-	csvFilePath := flag.String("file", "", "file path to be imported")
-	processFilePath := flag.String("process", "", "process script file path")
-	deleteOthers := flag.Bool("delete-others", false, "delete items not presents in this file")
-	flag.Parse()
-
-	config.CsvFilePath = *csvFilePath
-	config.ProcessFilePath = *processFilePath
-	config.DeleteOthers = *deleteOthers
-
-	mapBooleanYesNo := map[bool]string{
-		false: "No",
-		true:  "Yes",
-	}
-
-	h1("CONFIGURATION")
-	fmt.Printf(" --file (CSV file path)                 = %s\n", config.CsvFilePath)
-	fmt.Printf(" --process (Processor script file path) = %s\n", config.ProcessFilePath)
-	fmt.Printf(" --delete-others (Delete others items)  = %s\n", mapBooleanYesNo[config.DeleteOthers])
-	fmt.Println()
-}
-
 func main() {
-	loadConfig()
-	openCSVFile()
+	config := Config{}
+	config.Load()
+
+	file := CSVFile{}
+	file.Open(config.CsvFilePath)
 
 	start := time.Now()
 
 	for {
 		// transform the array into a map
-		document := getDocument()
-		if csvFile.EOF {
+		document := file.GetDocument()
+		if file.EOF {
 			break
 		}
 		if document == nil {
@@ -150,11 +161,15 @@ func main() {
 		TODO: send list with all IDs to MDM, if the param "--delete-old" is present
 	*/
 
-	// final stats
-	elapsedSeconds := time.Now().Sub(start).Seconds()
-	h1("STATS")
-	fmt.Printf("    processed: %14d (%d skipped / %.2f%%)\n", csvFile.Items, csvFile.Skipped, float64(csvFile.Skipped/csvFile.Items)*100)
-	fmt.Printf(" time elapsed: %14.4f\n", elapsedSeconds)
-	fmt.Printf("  rows/second: %14.4f\n", float64(csvFile.Items)/elapsedSeconds)
-	fmt.Printf(" files/second: %14.4f\n", (float64(csvFile.Items)/elapsedSeconds)/float64(csvFile.Items))
+	if config.Debug {
+		// final stats
+		elapsedSeconds := time.Now().Sub(start).Seconds()
+		h1("STATS")
+		fmt.Printf("    processed: %14d (%d skipped / %.2f%%)\n", file.Items, file.Skipped, float64(file.Skipped/file.Items)*100)
+		fmt.Printf(" time elapsed: %14.4f\n", elapsedSeconds)
+		fmt.Printf("  rows/second: %14.4f\n", float64(file.Items)/elapsedSeconds)
+		fmt.Printf(" files/second: %14.4f\n", (float64(file.Items)/elapsedSeconds)/float64(file.Items))
+	}
+
+	os.Exit(0)
 }
