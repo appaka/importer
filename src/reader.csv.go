@@ -83,8 +83,8 @@ func main() {
 		}
 
 		// print it
-		fmt.Printf("%.0f ", counter)
-		fmt.Println(*document)
+		//fmt.Printf("%.0f ", counter)
+		//fmt.Println(*document)
 
 		/*
 			TODO: execute reader-processor, which will return the final document
@@ -110,6 +110,10 @@ func main() {
 		*/
 
 	}
+
+	/*
+		TODO: send list with all IDs to MDM, if the param "--delete-old" is present
+	*/
 
 	// final stats
 	t := time.Now()
