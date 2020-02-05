@@ -11,14 +11,10 @@ import (
 	"time"
 )
 
-type CsvReader struct {
-	File *os.File
-}
-
-func getRow(r *csv.Reader, headers []string) *string {
-	record, err := r.Read()
+func getRow(reader *csv.Reader, headers []string) (*string, error) {
+	record, err := reader.Read()
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	row := map[string]string{}
@@ -34,41 +30,41 @@ func getRow(r *csv.Reader, headers []string) *string {
 	// transform the map into a JSON object
 	document, err := json.Marshal(row)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	documentString := string(document)
 
-	return &documentString
+	return &documentString, nil
 }
 
-func openFile(FileName string) (Reader *csv.Reader, Headers []string) {
-	FileReader, error := os.Open(FileName)
+func openFile(filename string) (reader *csv.Reader, headers []string) {
+	stream, error := os.Open(filename)
 	if error != nil {
 		fmt.Printf("ERROR!")
 		os.Exit(1)
 	}
 
-	Reader = csv.NewReader(bufio.NewReader(FileReader))
+	reader = csv.NewReader(bufio.NewReader(stream))
 
-	Headers, err := Reader.Read()
+	headers, err := reader.Read()
 	if err == io.EOF {
 		os.Exit(1)
 	}
 
-	return Reader, Headers
+	return reader, headers
 }
 
 func main() {
 	// PARAMS
-	fileName := flag.String("file", "", "file path to be imported")
-	processScript := flag.String("process", "", "process script file path")
+	filename := flag.String("file", "", "file path to be imported")
+	preprocessorScript := flag.String("process", "", "process script file path")
 	flag.Parse()
 
-	fmt.Printf("File: %s\n", *fileName)
-	fmt.Printf("Script: %s\n", *processScript)
+	fmt.Printf("File: %s\n", *filename)
+	fmt.Printf("Script: %s\n", *preprocessorScript)
 
 	// LOAD FILE
-	Reader, Headers := openFile(*fileName)
+	reader, headers := openFile(*filename)
 
 	start := time.Now()
 	counter := float64(0)
@@ -77,9 +73,12 @@ func main() {
 		counter++
 
 		// transform the array into a map
-		document := getRow(Reader, Headers)
-		if document == nil {
+		document, err := getRow(reader, headers)
+		if err == io.EOF {
 			break
+		}
+		if document == nil {
+			continue
 		}
 
 		// print it
@@ -96,7 +95,7 @@ func main() {
 
 		/*
 			TODO: send document to MDM
-			Headers:
+			headers:
 				Auth-User: manolo@node1
 			POST /document/{entity}/{id}
 			{
