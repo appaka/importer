@@ -33,19 +33,21 @@ We need:
 - graphql for querying the documents?
 
 
-
 ---
 
 MODULES:
 - CSV reader
-  - read a CSV file and send documents to MDM
+  - go app reading a CSV file and sending documents to MDM
   - delete not present documents?
     - send the PKs found in the CSV file to MDM, and MDM will delete the others
 - MDM
   - receive documents and generate transactions
   - receive documents to be deleted, and generate transactions
   - transactions could trigger events
-  - Go app managing a MongoDB
+  - go app managing a MongoDB
+- Cacher
+  - receive transactions from a RabbitMQ queue (new/updated documents)
+  - store documents into Redis
 - GraphQL
-  - Apollo access to MongoDB
+  - Apollo access to the MDM MongoDB
 

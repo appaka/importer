@@ -120,6 +120,6 @@ func main() {
 	elapsedSeconds := t.Sub(start).Seconds()
 	rowsPerSecond := counter / elapsedSeconds
 
-	fmt.Printf("time elapsedSeconds: %.4f\n", elapsedSeconds)
+	fmt.Printf("time elapsed: %.4f\n", elapsedSeconds)
 	fmt.Printf("rows per second: %.4f\n", rowsPerSecond)
 }
