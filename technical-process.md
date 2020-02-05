@@ -45,4 +45,7 @@ MODULES:
   - receive documents and generate transactions
   - receive documents to be deleted, and generate transactions
   - transactions could trigger events
+  - Go app managing a MongoDB
+- GraphQL
+  - Apollo access to MongoDB
 
