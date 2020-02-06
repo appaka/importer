@@ -24,15 +24,41 @@ type App struct {
 	// files and documents
 	reader  *csv.Reader
 	headers []string
+	stream  *os.File
 	EOF     bool
 	Items   int64
 	Skipped int64
+
+	// timing
+	start time.Time
 }
 
 func (app *App) Init() {
-	app.ShowVersion()
+	app.showVersion()
 	app.loadConfig()
+	app.openFile()
 
+	app.start = time.Now()
+
+	for {
+		// transform the array into a map
+		document := app.getNextDocument()
+		if app.EOF {
+			break
+		}
+		if document == nil {
+			// TODO: error reading document => implement proper logging
+			continue
+		}
+
+		app.onDocument(document)
+	}
+
+	/*
+		TODO: send list with all IDs to MDM, if the param "--delete-old" is present
+	*/
+
+	app.summary()
 }
 
 func (app *App) loadConfig() {
@@ -61,33 +87,47 @@ func (app *App) loadConfig() {
 	fmt.Println()
 }
 
-func (app *App) ShowVersion() {
+func (app *App) showVersion() {
 	fmt.Printf("AppakaDB importer v%s, by Javier Perez <hallo@javierperez.ch>\n\n", VERSION)
 }
 
-func (app *App) OpenFile() {
-	stream, error := os.Open(app.csvFilePath)
-	if error != nil {
+func (app *App) openFile() {
+	var err error
+	app.stream, err = os.Open(app.csvFilePath)
+	if err != nil {
 		fmt.Printf("ERROR opening file %s!\n", app.csvFilePath)
 		// Unable to open file error
 		os.Exit(1)
 	}
 
-	app.reader = csv.NewReader(bufio.NewReader(stream))
+	app.reader = csv.NewReader(bufio.NewReader(app.stream))
 
-	headers, err := app.reader.Read()
+	app.headers, err = app.reader.Read()
 	if err == io.EOF {
 		// No headers error
 		os.Exit(1)
 	}
 
-	app.headers = headers
 	app.EOF = false
 	app.Items = 0
 	app.Skipped = 0
 }
 
-func (app *App) GetNextDocument() *string {
+func (app *App) summary() {
+	_ = app.stream.Close()
+
+	// final stats
+	elapsedSeconds := time.Now().Sub(app.start).Seconds()
+	h1("STATS")
+	fmt.Printf("%14.4f time elapsed (seconds)\n", elapsedSeconds)
+	fmt.Printf("%14.4f documents processed (%d skipped / %.2f%%)\n", float64(app.Items), app.Skipped, float64(app.Skipped/app.Items)*100)
+	fmt.Printf("%14.4f documents/second\n", float64(app.Items)/elapsedSeconds)
+	fmt.Printf("%14.4f files/second\n", (float64(app.Items)/elapsedSeconds)/float64(app.Items))
+
+	os.Exit(0)
+}
+
+func (app *App) getNextDocument() *string {
 	record, err := app.reader.Read()
 	if err == io.EOF {
 		app.EOF = true
@@ -119,65 +159,26 @@ func (app *App) GetNextDocument() *string {
 	return &documentString
 }
 
+func (app *App) onDocument(document *string) {
+	/*
+		TODO: execute javascript reader-processor, which will return the final document
+		- exec javascript file into our JS VM, and it will return ID and final document (nil if we should skip it)
+		- this js file could access to MDM (MongoDB?) to fetch data
+
+		if there is no js file, then calculate the ID with the given params/config
+	*/
+
+	/*
+		TODO: send document to MDM
+		send document to a RabbitMQ queue, which will be consumed by the MDM
+	*/
+}
+
 func h1(title string) {
 	fmt.Printf("%s %s\n", title, strings.Repeat("=", 60-len(title)-1))
 }
 
 func main() {
-
 	app := App{}
 	app.Init()
-	app.OpenFile()
-
-	start := time.Now()
-
-	for {
-		// transform the array into a map
-		document := app.GetNextDocument()
-		if app.EOF {
-			break
-		}
-		if document == nil {
-			// TODO: error reading document => implement proper logging
-			continue
-		}
-
-		/*
-			TODO: execute reader-processor, which will return the final document
-			- exec javascript file into our JS VM, and it will return ID and final document (nil if we should skip it)
-			- this js file could access to MDM (MongoDB?) to fetch data
-
-			if there is no js file, then calculate the ID with the given params/config
-		*/
-
-		/*
-			TODO: send document to MDM
-			headers:
-				Auth-User: manolo@node1
-			POST /document/{entity}/{id}
-			{
-				"id": "123456",
-				"name: "manolo",
-			}
-
-			--- OR ---
-
-			send document to a RabbitMQ queue, which will be consumed by the MDM
-		*/
-
-	}
-
-	/*
-		TODO: send list with all IDs to MDM, if the param "--delete-old" is present
-	*/
-
-	// final stats
-	elapsedSeconds := time.Now().Sub(start).Seconds()
-	h1("STATS")
-	fmt.Printf("    processed: %14d (%d skipped / %.2f%%)\n", app.Items, app.Skipped, float64(app.Skipped/app.Items)*100)
-	fmt.Printf(" time elapsed: %14.4f\n", elapsedSeconds)
-	fmt.Printf("  rows/second: %14.4f\n", float64(app.Items)/elapsedSeconds)
-	fmt.Printf(" files/second: %14.4f\n", (float64(app.Items)/elapsedSeconds)/float64(app.Items))
-
-	os.Exit(0)
 }
