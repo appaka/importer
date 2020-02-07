@@ -1,6 +1,7 @@
 package main
 
 import (
+	"./config"
 	"bufio"
 	"encoding/csv"
 	"encoding/json"
@@ -179,6 +180,9 @@ func h1(title string) {
 }
 
 func main() {
+	cfg := config.GetConf()
+	fmt.Printf("host: %s\n", cfg.DBConfig.Host)
+
 	app := App{}
 	app.Init()
 }
