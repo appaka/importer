@@ -19,7 +19,7 @@ type App struct {
 	// config values
 	csvFilePath     string
 	processFilePath string
-	deleteOthers    bool
+	fullImport      bool
 	debug           bool
 
 	// files and documents
@@ -56,7 +56,7 @@ func (app *App) Init() {
 	}
 
 	/*
-		TODO: send list with all IDs to MDM, if the param "--delete-old" is present
+		TODO: send list with all IDs to MDM, if the param "--full-import" is present
 	*/
 
 	app.summary()
@@ -66,13 +66,13 @@ func (app *App) loadConfig() {
 	// PARAMS
 	csvFilePath := flag.String("file", "", "file path to be imported")
 	processFilePath := flag.String("process", "", "process script file path")
-	deleteOthers := flag.Bool("delete-others", false, "delete items not presents in this file")
+	fullImport := flag.Bool("full-import", false, "delete items not presents in this file")
 	debug := flag.Bool("debug", true, "debug process")
 	flag.Parse()
 
 	app.csvFilePath = *csvFilePath
 	app.processFilePath = *processFilePath
-	app.deleteOthers = *deleteOthers
+	app.fullImport = *fullImport
 	app.debug = *debug
 
 	mapBooleanYesNo := map[bool]string{
@@ -83,7 +83,7 @@ func (app *App) loadConfig() {
 	h1("CONFIGURATION")
 	fmt.Printf(" --file (CSV file path)                 = %s\n", app.csvFilePath)
 	fmt.Printf(" --process (Processor script file path) = %s\n", app.processFilePath)
-	fmt.Printf(" --delete-others (Delete others items)  = %s\n", mapBooleanYesNo[app.deleteOthers])
+	fmt.Printf(" --full-import (Delete others items)    = %s\n", mapBooleanYesNo[app.fullImport])
 	fmt.Printf(" --debug (Debug process)                = %s\n", mapBooleanYesNo[app.debug])
 	fmt.Println()
 }
